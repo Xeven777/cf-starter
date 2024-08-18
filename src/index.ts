@@ -1,48 +1,120 @@
 import { cors } from 'hono/cors';
 import { Hono } from 'hono';
+import { stream, streamText } from 'hono/streaming';
+import { events } from 'fetch-event-stream';
 
 const app = new Hono();
-app.use('/t', cors());
-app.use('/lorem', cors());
+app.use('/gemma', cors());
 app.notFound((c) => c.json({ message: 'Not Found', ok: false }, 404));
 
-app.get('/', (c) => c.text('Hello Guyss! go to /t to use the API'));
+app.get('/', (c) => c.text('Hello Guyss! go to /gemma to use the API'));
 
-app.get('/t', async (c) => {
+app.get('/gemma', async (c) => {
+	const question = c.req.query('q') || 'Hello , what can you do?';
 	const messages = [
 		{
 			role: 'system',
-			content:
-				'You are a motivational speaker. You will give inspirational, optimistic, motivational and uplifting quotes. Return only the random quote and nothing else.',
+			content: 'You are a helpful AI assistant. You can help me with anything, from answering questions to providing recommendations.',
 		},
 		{
 			role: 'user',
-			content: 'say me a quote.Return any 1 quote.',
+			content: question,
 		},
 	];
 	// @ts-expect-error
-	const response = await (c.env as Env).AI.run('@hf/google/gemma-7b-it', { messages });
+	const response = await (c.env as Env).AI.run('@hf/google/gemma-7b-it', { messages, stream: true });
 
-	return Response.json(response);
+	// return Response.json(response);
+	return streamText(c, async (stream) => {
+		const chunks = events(new Response(response));
+		for await (const chunk of chunks) {
+			if (chunk.data !== '[DONE]') {
+				const data = JSON.parse(chunk.data?.toString() || '{}');
+				stream.write(data.response);
+			}
+		}
+	});
 });
 
-app.get('/lorem', async (c) => {
-	const limit = c.req.query('l') || 50;
+app.get('/qwen', async (c) => {
+	const question = c.req.query('q') || 'Hello , what can you do?';
 	const messages = [
 		{
 			role: 'system',
-			content:
-				'You are a random essay text generator. You will generate random text in English Language (not latin) , which sounds simple but doest mean anything sense. Return only the random text and nothing else.',
+			content: 'You are a helpful AI assistant. You can help me with anything, from answering questions to providing recommendations.',
 		},
 		{
 			role: 'user',
-			content: 'Give me dummy text of ' + limit + ' words.',
+			content: question,
 		},
 	];
 	// @ts-expect-error
-	const response = await (c.env as Env).AI.run('@cf/meta/llama-3-8b-instruct', { messages });
+	const response = await (c.env as Env).AI.run('@cf/qwen/qwen1.5-14b-chat-awq', { messages, stream: true });
 
-	return Response.json(response);
+	// return Response.json(response);
+	return streamText(c, async (stream) => {
+		const chunks = events(new Response(response));
+		for await (const chunk of chunks) {
+			if (chunk.data !== '[DONE]') {
+				const data = JSON.parse(chunk.data?.toString() || '{}');
+				stream.write(data.response);
+			}
+		}
+	});
+});
+
+app.get('/llama', async (c) => {
+	const question = c.req.query('q') || 'Hello , what can you do?';
+	const messages = [
+		{
+			role: 'system',
+			content: 'You are a helpful AI assistant. You can help me with anything, from answering questions to providing recommendations.',
+		},
+		{
+			role: 'user',
+			content: question,
+		},
+	];
+	// @ts-expect-error
+	const response = await (c.env as Env).AI.run('@cf/meta/llama-3.1-8b-instruct-awq', { messages, stream: true });
+
+	// return Response.json(response);
+	return streamText(c, async (stream) => {
+		const chunks = events(new Response(response));
+		for await (const chunk of chunks) {
+			if (chunk.data !== '[DONE]') {
+				const data = JSON.parse(chunk.data?.toString() || '{}');
+				stream.write(data.response);
+			}
+		}
+	});
+});
+
+app.get('/mistral', async (c) => {
+	const question = c.req.query('q') || 'Hello , what can you do?';
+	const messages = [
+		{
+			role: 'system',
+			content: 'You are a helpful AI assistant. You can help me with anything, from answering questions to providing recommendations.',
+		},
+		{
+			role: 'user',
+			content: question,
+		},
+	];
+	// @ts-expect-error
+	const response = await (c.env as Env).AI.run('@cf/mistral/mistral-7b-instruct-v0.1', { messages, stream: true });
+
+	// return Response.json(response);
+	return streamText(c, async (stream) => {
+		const chunks = events(new Response(response));
+		for await (const chunk of chunks) {
+			if (chunk.data !== '[DONE]') {
+				const data = JSON.parse(chunk.data?.toString() || '{}');
+				stream.write(data.response);
+			}
+		}
+	});
 });
 
 export default app;
