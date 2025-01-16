@@ -1,13 +1,11 @@
 import { cors } from 'hono/cors';
 import { Hono } from 'hono';
-import { stream, streamText } from 'hono/streaming';
-import { events } from 'fetch-event-stream';
 
 const app = new Hono();
-app.use('/gemma', cors());
+app.use(cors());
 app.notFound((c) => c.json({ message: 'Not Found', ok: false }, 404));
 
-app.get('/', (c) => c.text('Hello Guyss! go to /gemma to use the API'));
+app.get('/', (c) => c.text('Hello Guyss! go to /gemma, /qwen, /phi, /llama, /mistral to use the API'));
 
 app.get('/gemma', async (c) => {
 	const question = c.req.query('q') || 'Hello , what can you do?';
@@ -21,19 +19,9 @@ app.get('/gemma', async (c) => {
 			content: question,
 		},
 	];
-	// @ts-expect-error
-	const response = await (c.env as Env).AI.run('@hf/google/gemma-7b-it', { messages, stream: true });
+	const response = await (c.env as Env).AI.run('@hf/google/gemma-7b-it', { messages });
 
-	// return Response.json(response);
-	return streamText(c, async (stream) => {
-		const chunks = events(new Response(response));
-		for await (const chunk of chunks) {
-			if (chunk.data !== '[DONE]') {
-				const data = JSON.parse(chunk.data?.toString() || '{}');
-				stream.write(data.response);
-			}
-		}
-	});
+	return Response.json(response);
 });
 
 app.get('/qwen', async (c) => {
@@ -48,19 +36,9 @@ app.get('/qwen', async (c) => {
 			content: question,
 		},
 	];
-	// @ts-expect-error
-	const response = await (c.env as Env).AI.run('@cf/qwen/qwen1.5-14b-chat-awq', { messages, stream: true });
+	const response = await (c.env as Env).AI.run('@cf/qwen/qwen1.5-14b-chat-awq', { messages });
 
-	// return Response.json(response);
-	return streamText(c, async (stream) => {
-		const chunks = events(new Response(response));
-		for await (const chunk of chunks) {
-			if (chunk.data !== '[DONE]') {
-				const data = JSON.parse(chunk.data?.toString() || '{}');
-				stream.write(data.response);
-			}
-		}
-	});
+	return Response.json(response);
 });
 
 app.get('/llama', async (c) => {
@@ -75,19 +53,9 @@ app.get('/llama', async (c) => {
 			content: question,
 		},
 	];
-	// @ts-expect-error
-	const response = await (c.env as Env).AI.run('@cf/meta/llama-3.1-8b-instruct-awq', { messages, stream: true });
+	const response = await (c.env as Env).AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', { messages });
 
-	// return Response.json(response);
-	return streamText(c, async (stream) => {
-		const chunks = events(new Response(response));
-		for await (const chunk of chunks) {
-			if (chunk.data !== '[DONE]') {
-				const data = JSON.parse(chunk.data?.toString() || '{}');
-				stream.write(data.response);
-			}
-		}
-	});
+	return Response.json(response);
 });
 
 app.get('/mistral', async (c) => {
@@ -102,19 +70,26 @@ app.get('/mistral', async (c) => {
 			content: question,
 		},
 	];
-	// @ts-expect-error
-	const response = await (c.env as Env).AI.run('@cf/mistral/mistral-7b-instruct-v0.1', { messages, stream: true });
+	const response = await (c.env as Env).AI.run('@hf/mistral/mistral-7b-instruct-v0.2', { messages });
 
-	// return Response.json(response);
-	return streamText(c, async (stream) => {
-		const chunks = events(new Response(response));
-		for await (const chunk of chunks) {
-			if (chunk.data !== '[DONE]') {
-				const data = JSON.parse(chunk.data?.toString() || '{}');
-				stream.write(data.response);
-			}
-		}
-	});
+	return Response.json(response);
+});
+
+app.get('/phi', async (c) => {
+	const question = c.req.query('q') || 'Hello , what can you do?';
+	const messages = [
+		{
+			role: 'system',
+			content: 'You are a helpful AI assistant. You can help me with anything, from answering questions to providing recommendations.',
+		},
+		{
+			role: 'user',
+			content: question,
+		},
+	];
+	const response = await (c.env as Env).AI.run('@cf/microsoft/phi-2', { messages });
+
+	return Response.json(response);
 });
 
 export default app;
