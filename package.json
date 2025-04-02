@@ -1,6 +1,6 @@
 {
   "name": "ai-chat-api",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy --minify src/index.ts",
@@ -9,12 +9,12 @@
     "typegen": "wrangler types"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250109.0",
-    "typescript": "^5.7.3",
-    "wrangler": "^3.102.0"
+    "@cloudflare/workers-types": "^4.20250402.0",
+    "typescript": "^5.8.2",
+    "wrangler": "^4.6.0"
   },
   "dependencies": {
     "fetch-event-stream": "^0.1.5",
-    "hono": "^4.6.16"
+    "hono": "^4.7.5"
   }
 }

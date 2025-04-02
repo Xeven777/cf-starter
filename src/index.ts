@@ -36,7 +36,7 @@ app.get('/qwen', async (c) => {
 			content: question,
 		},
 	];
-	const response = await (c.env as Env).AI.run('@cf/qwen/qwen1.5-14b-chat-awq', { messages });
+	const response = await (c.env as Env).AI.run('@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', { messages });
 
 	return Response.json(response);
 });
